@@ -6,14 +6,15 @@ import csv
 import sys
 from pathlib import Path
 from langcodes import Language
+import langcodes
 import whisper
 from whisper.utils import get_writer
 from datetime import date
+import pandas as pd
 
 sys.argv = ['whisper_with_metadata_vtt.py', '/Users/nraogra/Desktop/Captioning/metadata_test', '/Users/nraogra/Desktop/Captioning/metadata_test/webvtt_titles.csv']
 
-# check that command has metadata file location
-# and caption folder location
+# check that command has metadata file location and caption folder location
 if len(sys.argv) != 3:
     print("Usage: python whisper_with_metadata_vtt.py [media directory] [metadata csv]")
     sys.exit(1)
@@ -34,17 +35,22 @@ arg2 = sys.argv[2]
 print('media directory: ',arg1)
 print('metadata csv: ',arg2)
 
-# make output file in output folder
-# for filename in glob.glob(directory + '/*.vtt'):
-#     justName = Path(filename).stem
-#     outputName = justName + "_new.vtt"
-#     sourceFile = os.path.basename(filename)
-#     outputFile = os.path.join(outputDir, outputName)
+# prompt to choose whisper model
+modelchoice = input("what model do you want to use?\noptions: tiny, base, small, medium, large-v3, turbo\n")
+while modelchoice not in {"tiny", "base", "small", "medium", "large-v3", "turbo"}:
+    print("Invalid input.")
+    modelchoice = input("what model do you want to use? options: tiny, base, small, medium, large-v3, turbo\n")
+print(f"model selected: {modelchoice}")
 
+# prompt to specify language
+langg = input("enter the content language or leave blank for auto-detect: ")
+if langg != "":
+    lang_find = langcodes.find(langg)
+    lang_obj3 = Language.get(lang_find).to_alpha3()
+    print(f"language: {lang_obj3}")
 
 # check for output folder and create if needed
 outputDir = os.path.join(arg1, "output")
-
 print("Checking for output folder...")
 
 if not os.path.exists(outputDir):
@@ -54,20 +60,33 @@ if not os.path.exists(outputDir):
 else:
     print("Output folder %s already exists" % outputDir)
 
-    
-modelchoice = "tiny"
 
 def get_title_mediaID():
 # read metadata from csv
-    with open(arg2, 'r') as metadataFile:
-        metadataReader = csv.reader(metadataFile)
+    df = pd.read_csv(arg2, dtype="str", index_col="File")
+    try:
+        rows = df.loc[sourceFile]
+        Title = df.at[sourceFile, "Title"]
+        print(Title)
+    except KeyError:
+        Title = "Sorry"
+        print(Title)
+            
+#     with open(arg2, 'r', encoding="utf8") as metadataFile:
+#         metadataReader = csv.reader(metadataFile)
+# 
+#         for row in metadataReader:
+#             if row[0] == sourceFile:
+#                 print(f"Metadata match found for {sourceFile}")
+#                 Title = row[1]
+#                 MediaID = row[2]
+#                 return Title, MediaID
+#             else:
+#                 print(f"No metadata match found for {sourceFile}")
+#                 Title = ""
+#                 MediaID = ""
+#                 return Title, MediaID
 
-        for row in metadataReader:
-            if row[0] == sourceFile:
-                print(f"Match found for {sourceFile}")
-                Title = row[1]
-                MediaID = row[2]
-                return Title, MediaID
 
 def get_language():
     model = whisper.load_model(modelchoice)
@@ -81,22 +100,14 @@ def get_language():
     alpha3 = lang_obj.to_alpha3()
     return alpha3
     
-# # decode the audio
-# options = whisper.DecodingOptions()
-# result = whisper.decode(model, mel, options)
-# 
-# # result = model.transcribe("/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min.mp4")
-# print(result.text)
 
 def whisper_transcribe(
     audio_path: str,
     ):
-#     audio_path = arg1
-#     output_dir = '/Users/nraogra/Desktop/Captioning/metadata_test'
 
     model = whisper.load_model(modelchoice)
     output_dir = outputDir
-    language = "en" if modelchoice.endswith(".en") else None
+    language = "en" if modelchoice.endswith(".en") else langg if langg != "" else None
     result = model.transcribe(
         audio_path, language=language, temperature=0.0, word_timestamps=True, task="transcribe"
     )
@@ -114,7 +125,7 @@ def whisper_transcribe(
     
     ver = (whisper.__version__)
     
-    with open (outputVTT, 'rt') as newVTT:
+    with open (outputVTT, 'rt', encoding="utf8") as newVTT:
         data = newVTT.read()
         mList = [
             "WEBVTT",
@@ -122,23 +133,24 @@ def whisper_transcribe(
             "Type: caption",
             f"Language: {lango}",
             "Responsible Party: US, Emory University",
-            f"Media Identifier: {MediaID}, Emory PID",
+            f"Media Identifier: {MID}, Emory PID",
             f"Originating File: {sourceFile}",
             "File Creator: Whisper",
             f"File Creation Date: {today}",
-            f"Title: {Title}",
+            f"Title: {Ti}",
             "Origin History: Created by Emory Libraries Media Preservation",
             f"Local Usage Element: Software version: v{ver}; Review history: unreviewed"
             ]
         mString = '\n'.join(mList)
         data = data.replace('WEBVTT', mString)
         newVTT.close()
-    with open (outputVTT, 'wt') as newVTT:
+    with open (outputVTT, 'wt', encoding="utf8") as newVTT:
         newVTT.write(data)
         newVTT.close()
 
 # do the thing
-for mediafile in glob.glob(arg1 + '/*.{mp4,mp3}'):
+ext = ['.mp4', '.mp3']
+for mediafile in glob.glob(f"{arg1}/*{ext}"):
     justName = Path(mediafile).stem
     sourceFile = os.path.basename(mediafile)
     outputName = justName + ".vtt"
@@ -147,27 +159,39 @@ for mediafile in glob.glob(arg1 + '/*.{mp4,mp3}'):
     print(sourceFile)
     print(outputName)
     print(outputFile)
-
-    if not os.path.exists(outputFile):
-        Title, MediaID = get_title_mediaID()
-        print(Title)
-        print(MediaID)
+    
+    if langg == "":
         lango = get_language()
-        print(lango)
-        whisper_transcribe(mediafile)
     else:
-        while True:
-            print("Output file %s already exists, do you want to overwrite? (y/n)" % outputName)
-            userDecide = input()
-            if userDecide == "n":
-                print("Skipping file")
-                break
-            elif userDecide == "y":
-                print("Overwriting file %s" % outputName)
-                Title, MediaID = get_title_mediaID()
-                print(Title)
-                print(MediaID)
-                lango = get_language()
-                print(lango)
-                whisper_transcribe(mediafile)
-                break
+        lango = lang_obj3  
+    print(lango)
+    
+    if not os.path.exists(outputFile):
+#         Ti, MID = get_title_mediaID()
+        get_title_mediaID()
+# 
+#         print(Ti)
+#         whisper_transcribe(mediafile)
+#     else:
+#         while True:
+#             print("Output file %s already exists, do you want to overwrite? (y/n)" % outputName)
+#             userDecide = input()
+#             if userDecide == "n":
+#                 print("Skipping file")
+#                 break
+#             elif userDecide == "y":
+#                 print("Overwriting file %s" % outputName)
+#                 with open(arg2, 'r', encoding="utf8") as metadataFile:
+#                     metadataReader = csv.reader(metadataFile)
+#                     for row in metadataReader:
+#                         if row[0] == sourceFile:
+#                             print(f"Metadata match found for {sourceFile}")
+#                             Title = row[1]
+#                             MediaID = row[2]
+#                             whisper_transcribe(mediafile)
+#                         else:
+#                             print(f"No metadata match found for {sourceFile}")
+#                             Title = ""
+#                             MediaID = ""
+#                             whisper_transcribe(mediafile)
+#                             
