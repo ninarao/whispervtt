@@ -2,7 +2,6 @@
 
 import glob
 import os
-import csv
 import sys
 from pathlib import Path
 from langcodes import Language
@@ -38,7 +37,7 @@ print('metadata csv: ',arg2)
 # prompt to choose whisper model
 modelchoice = input("what model do you want to use?\noptions: tiny, base, small, medium, large-v3, turbo\n")
 while modelchoice not in {"tiny", "base", "small", "medium", "large-v3", "turbo"}:
-    print("Invalid input.")
+    print("invalid input.")
     modelchoice = input("what model do you want to use? options: tiny, base, small, medium, large-v3, turbo\n")
 print(f"model selected: {modelchoice}")
 
@@ -51,42 +50,41 @@ if langg != "":
 
 # check for output folder and create if needed
 outputDir = os.path.join(arg1, "output")
-print("Checking for output folder...")
-
+print("checking for output folder...")
 if not os.path.exists(outputDir):
-    print(outputDir)
     os.mkdir(outputDir)
-    print("Output folder %s created" % outputDir)
+    print("output folder %s created" % outputDir)
 else:
-    print("Output folder %s already exists" % outputDir)
+    print("output folder %s already exists" % outputDir)
 
 
-def get_title_mediaID():
+def get_title():
 # read metadata from csv
     df = pd.read_csv(arg2, dtype="str", index_col="File")
     try:
-        rows = df.loc[sourceFile]
         Title = df.at[sourceFile, "Title"]
-        print(Title)
+        if pd.isna(df.at[sourceFile, "Title"]):
+            TitleLine = "Title: unknown"
+        else:
+            TitleLine = f"Title: {Title}"
+        return TitleLine
     except KeyError:
-        Title = "Sorry"
-        print(Title)
-            
-#     with open(arg2, 'r', encoding="utf8") as metadataFile:
-#         metadataReader = csv.reader(metadataFile)
-# 
-#         for row in metadataReader:
-#             if row[0] == sourceFile:
-#                 print(f"Metadata match found for {sourceFile}")
-#                 Title = row[1]
-#                 MediaID = row[2]
-#                 return Title, MediaID
-#             else:
-#                 print(f"No metadata match found for {sourceFile}")
-#                 Title = ""
-#                 MediaID = ""
-#                 return Title, MediaID
-
+        TitleLine = "Title: unknown"
+        return TitleLine
+    
+def get_mediaID():
+# read metadata from csv
+    df = pd.read_csv(arg2, dtype="str", index_col="File")
+    try:
+        MediaID = df.at[sourceFile, "Media Identifier"]
+        if pd.isna(df.at[sourceFile, "Media Identifier"]):
+            MediaIDLine = "Media Identifier: unknown"
+        else:
+            MediaIDLine = f"Media Identifier: {MediaID}, Emory PID"
+        return MediaIDLine
+    except KeyError:
+        MediaIDLine = "Media Identifier: unknown"
+        return MediaIDLine
 
 def get_language():
     model = whisper.load_model(modelchoice)
@@ -109,7 +107,7 @@ def whisper_transcribe(
     output_dir = outputDir
     language = "en" if modelchoice.endswith(".en") else langg if langg != "" else None
     result = model.transcribe(
-        audio_path, language=language, temperature=0.0, word_timestamps=True, task="transcribe"
+        audio_path, language=language, temperature=0, no_speech_threshold=0.4, word_timestamps=True, task="transcribe"
     )
     word_options = {
         "max_line_count": 2,
@@ -125,6 +123,9 @@ def whisper_transcribe(
     
     ver = (whisper.__version__)
     
+    MediaIDLine = get_mediaID()
+    TitleLine = get_title()
+
     with open (outputVTT, 'rt', encoding="utf8") as newVTT:
         data = newVTT.read()
         mList = [
@@ -133,11 +134,11 @@ def whisper_transcribe(
             "Type: caption",
             f"Language: {lango}",
             "Responsible Party: US, Emory University",
-            f"Media Identifier: {MID}, Emory PID",
+            f"{MediaIDLine}",
             f"Originating File: {sourceFile}",
             "File Creator: Whisper",
             f"File Creation Date: {today}",
-            f"Title: {Ti}",
+            f"{TitleLine}",
             "Origin History: Created by Emory Libraries Media Preservation",
             f"Local Usage Element: Software version: v{ver}; Review history: unreviewed"
             ]
@@ -155,43 +156,24 @@ for mediafile in glob.glob(f"{arg1}/*{ext}"):
     sourceFile = os.path.basename(mediafile)
     outputName = justName + ".vtt"
     outputFile = os.path.join(outputDir, outputName)
-    print(justName)
-    print(sourceFile)
-    print(outputName)
-    print(outputFile)
+    print(f"processing {sourceFile}")
     
     if langg == "":
         lango = get_language()
     else:
         lango = lang_obj3  
-    print(lango)
+    print(f"language: {lango}")
     
     if not os.path.exists(outputFile):
-#         Ti, MID = get_title_mediaID()
-        get_title_mediaID()
-# 
-#         print(Ti)
-#         whisper_transcribe(mediafile)
-#     else:
-#         while True:
-#             print("Output file %s already exists, do you want to overwrite? (y/n)" % outputName)
-#             userDecide = input()
-#             if userDecide == "n":
-#                 print("Skipping file")
-#                 break
-#             elif userDecide == "y":
-#                 print("Overwriting file %s" % outputName)
-#                 with open(arg2, 'r', encoding="utf8") as metadataFile:
-#                     metadataReader = csv.reader(metadataFile)
-#                     for row in metadataReader:
-#                         if row[0] == sourceFile:
-#                             print(f"Metadata match found for {sourceFile}")
-#                             Title = row[1]
-#                             MediaID = row[2]
-#                             whisper_transcribe(mediafile)
-#                         else:
-#                             print(f"No metadata match found for {sourceFile}")
-#                             Title = ""
-#                             MediaID = ""
-#                             whisper_transcribe(mediafile)
-#                             
+        whisper_transcribe(mediafile)
+    else:
+        while True:
+            print("output file %s already exists, do you want to overwrite? (y/n)" % outputName)
+            userDecide = input()
+            if userDecide == "n":
+                print("skipping file")
+                break
+            elif userDecide == "y":
+                print("overwriting file %s" % outputName)
+                whisper_transcribe(mediafile)
+                break
