@@ -105,10 +105,16 @@ def whisper_transcribe(
 
     model = whisper.load_model(modelchoice)
     output_dir = outputDir
-    language = "en" if modelchoice.endswith(".en") else langg if langg != "" else None
-    result = model.transcribe(
-        audio_path, language=language, temperature=0, no_speech_threshold=0.4, word_timestamps=True, task="transcribe"
-    )
+    options = whisper.DecodingOptions().__dict__.copy()
+    options['task'] = "transcribe"
+    options['language'] = "en" if modelchoice.endswith(".en") else langg if langg != "" else None
+    options['no_speech_threshold'] = 0.4
+    options['word_timestamps'] = True
+    result = model.transcribe(audio_path, **options)
+    
+    txt_write = get_writer('txt', output_dir=output_dir)
+    txt_write(result, audio_path)
+    
     word_options = {
         "max_line_count": 2,
         "max_line_width": 32
