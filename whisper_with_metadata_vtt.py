@@ -2,6 +2,7 @@
 
 import glob
 import os
+import argparse
 import sys
 from pathlib import Path
 from langcodes import Language
@@ -11,28 +12,56 @@ from whisper.utils import get_writer
 from datetime import date
 import pandas as pd
 
-sys.argv = ['whisper_with_metadata_vtt.py', '/Users/nraogra/Desktop/Captioning/metadata_test', '/Users/nraogra/Desktop/Captioning/metadata_test/webvtt_titles.csv']
+# sys.argv = ['whisper_with_metadata_vtt.py', '/Users/nraogra/Desktop/Captioning/metadata_test', '/Users/nraogra/Desktop/Captioning/metadata_test/webvtt_titles.csv']
+
+def valid_directory(path_string):
+    if not os.path.isdir(path_string):
+        raise argparse.ArgumentTypeError(f"'{path_string}' is not a valid directory.")
+    return path_string
+
+def valid_csv(path_csv):
+    if not os.path.isfile(path_csv) or path_csv.suffix != ".csv":
+        raise argparse.ArgumentTypeError(f"'{path_csv}' is not a valid csv file.")
+    return path_csv
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("media_directory", type=valid_directory, help="Directory of media files")
+parser.add_argument("-c", "--csv", type=valid_csv, action="store_true", help="Metadata CSV")
+parser.add_argument("-o", "--overwrite", action="store_true", help="overwrite any existing output files")
+
+args = parser.parse_args()
+
+arg1 = args.media_directory
+print('media directory: ',arg1)
+
+if args.csv == True:
+    arg2 = args.csv
+    print('metadata csv: ',arg2)
+else:
+    print("No csv")
+
+if args.overwrite == True:
+    print("Existing output files will be overwritten.")
 
 # check that command has metadata file location and caption folder location
-if len(sys.argv) != 3:
-    print("Usage: python whisper_with_metadata_vtt.py [media directory] [metadata csv]")
-    sys.exit(1)
+# if len(sys.argv) != 3:
+#     print("Usage: python whisper_with_metadata_vtt.py [media directory] [metadata csv]")
+#     sys.exit(1)
 
-if not os.path.isdir(sys.argv[1]):
-    print("Error: %s is not a valid directory." % sys.argv[1])
-    print("Usage: python whisper_with_metadata_vtt.py [media directory] [metadata csv]")
-    sys.exit(1)
+# if not os.path.isdir(args.media_directory):
+#     print("Error: %s is not a valid directory." % sys.argv[1])
+#     print("Usage: python whisper_with_metadata_vtt.py [media directory] [metadata csv]")
+#     sys.exit(1)
         
-if not os.path.isfile(sys.argv[2]):
-    print("Error: %s is not a valid file." % sys.argv[2])
-    print("Usage: python whisper_with_metadata_vtt.py [media directory] [metadata csv]")
-    sys.exit(1)
+# if not os.path.isfile(sys.argv[2]):
+#     print("Error: %s is not a valid file." % sys.argv[2])
+#     print("Usage: python whisper_with_metadata_vtt.py [media directory] [metadata csv]")
+#     sys.exit(1)
         
-arg1 = sys.argv[1]
-arg2 = sys.argv[2]
+# arg1 = sys.argv[1]
+# arg2 = sys.argv[2]
 
-print('media directory: ',arg1)
-print('metadata csv: ',arg2)
 
 # prompt to choose whisper model
 modelchoice = input("what model do you want to use?\noptions: tiny, base, small, medium, large-v3, turbo\n")
@@ -59,32 +88,40 @@ else:
 
 
 def get_title():
-# read metadata from csv
-    df = pd.read_csv(arg2, dtype="str", index_col="File")
-    try:
-        Title = df.at[sourceFile, "Title"]
-        if pd.isna(df.at[sourceFile, "Title"]):
+    if args.csv == False:
+        TitleLine = ""
+        return TitleLine
+    else:
+    # read metadata from csv
+        df = pd.read_csv(arg2, dtype="str", index_col="File")
+        try:
+            Title = df.at[sourceFile, "Title"]
+            if pd.isna(df.at[sourceFile, "Title"]):
+                TitleLine = "Title: unknown"
+            else:
+                TitleLine = f"Title: {Title}"
+            return TitleLine
+        except KeyError:
             TitleLine = "Title: unknown"
-        else:
-            TitleLine = f"Title: {Title}"
-        return TitleLine
-    except KeyError:
-        TitleLine = "Title: unknown"
-        return TitleLine
+            return TitleLine
     
 def get_mediaID():
-# read metadata from csv
-    df = pd.read_csv(arg2, dtype="str", index_col="File")
-    try:
-        MediaID = df.at[sourceFile, "Media Identifier"]
-        if pd.isna(df.at[sourceFile, "Media Identifier"]):
+    if args.csv == False:
+        MediaIDLine = ""
+        return MediaIDLine
+    else:
+    # read metadata from csv
+        df = pd.read_csv(arg2, dtype="str", index_col="File")
+        try:
+            MediaID = df.at[sourceFile, "Media Identifier"]
+            if pd.isna(df.at[sourceFile, "Media Identifier"]):
+                MediaIDLine = "Media Identifier: unknown"
+            else:
+                MediaIDLine = f"Media Identifier: {MediaID}, Emory PID"
+            return MediaIDLine
+        except KeyError:
             MediaIDLine = "Media Identifier: unknown"
-        else:
-            MediaIDLine = f"Media Identifier: {MediaID}, Emory PID"
-        return MediaIDLine
-    except KeyError:
-        MediaIDLine = "Media Identifier: unknown"
-        return MediaIDLine
+            return MediaIDLine
 
 def get_language():
     model = whisper.load_model(modelchoice)
