@@ -44,25 +44,6 @@ else:
 if args.overwrite == True:
     print("Existing output files will be overwritten.")
 
-# check that command has metadata file location and caption folder location
-# if len(sys.argv) != 3:
-#     print("Usage: python whisper_with_metadata_vtt.py [media directory] [metadata csv]")
-#     sys.exit(1)
-
-# if not os.path.isdir(args.media_directory):
-#     print("Error: %s is not a valid directory." % sys.argv[1])
-#     print("Usage: python whisper_with_metadata_vtt.py [media directory] [metadata csv]")
-#     sys.exit(1)
-        
-# if not os.path.isfile(sys.argv[2]):
-#     print("Error: %s is not a valid file." % sys.argv[2])
-#     print("Usage: python whisper_with_metadata_vtt.py [media directory] [metadata csv]")
-#     sys.exit(1)
-        
-# arg1 = sys.argv[1]
-# arg2 = sys.argv[2]
-
-
 # prompt to choose whisper model
 modelchoice = input("what model do you want to use?\noptions: tiny, base, small, medium, large-v3, turbo\n")
 while modelchoice not in {"tiny", "base", "small", "medium", "large-v3", "turbo"}:
@@ -85,7 +66,6 @@ if not os.path.exists(outputDir):
     print("output folder %s created" % outputDir)
 else:
     print("output folder %s already exists" % outputDir)
-
 
 def get_title():
     if args.csv == False:
@@ -135,7 +115,6 @@ def get_language():
     alpha3 = lang_obj.to_alpha3()
     return alpha3
     
-
 def whisper_transcribe(
     audio_path: str,
     ):
@@ -143,6 +122,9 @@ def whisper_transcribe(
     model = whisper.load_model(modelchoice)
     output_dir = outputDir
     options = whisper.DecodingOptions().__dict__.copy()
+    options['verbose'] = True
+    options['beam_size'] = 10
+    options['best_of'] = 5
     options['task'] = "transcribe"
     options['language'] = "en" if modelchoice.endswith(".en") else langg if langg != "" else None
     options['no_speech_threshold'] = 0.4
