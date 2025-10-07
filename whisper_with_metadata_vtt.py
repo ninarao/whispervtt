@@ -178,33 +178,36 @@ def whisper_transcribe(
         newVTT.write(data)
         newVTT.close()
 
-# do the thing
-ext = ['.mp4', '.mp3']
-for mediafile in glob.glob(f"{arg1}/*{ext}"):
-    justName = Path(mediafile).stem
-    sourceFile = os.path.basename(mediafile)
-    outputName = justName + ".vtt"
-    outputFile = os.path.join(outputDir, outputName)
-    print(f"processing {sourceFile}")
-    
-    if langg == "":
-        lango = get_language()
-    else:
-        lango = lang_obj3  
-    print(f"language: {lango}")
-    
-    if not os.path.exists(outputFile):
-        whisper_transcribe(mediafile)
-    elif args.overwrite == True:
-        whisper_transcribe(mediafile)
-    else:
-        while True:
-            print("output file %s already exists, do you want to overwrite? (y/n)" % outputName)
-            userDecide = input()
-            if userDecide == "n":
-                print("skipping file")
-                break
-            elif userDecide == "y":
-                print("overwriting file %s" % outputName)
-                whisper_transcribe(mediafile)
-                break
+def main():
+    ext = ['.mp4', '.mp3']
+    for mediafile in glob.glob(f"{arg1}/*{ext}"):
+        justName = Path(mediafile).stem
+        sourceFile = os.path.basename(mediafile)
+        outputName = justName + ".vtt"
+        outputFile = os.path.join(outputDir, outputName)
+        print(f"processing {sourceFile}")
+        
+        if langg == "":
+            lango = get_language()
+        else:
+            lango = lang_obj3  
+        print(f"language: {lango}")
+        
+        if not os.path.exists(outputFile):
+            whisper_transcribe(mediafile)
+        elif args.overwrite == True:
+            whisper_transcribe(mediafile)
+        else:
+            while True:
+                print("output file %s already exists, do you want to overwrite? (y/n)" % outputName)
+                userDecide = input()
+                if userDecide == "n":
+                    print("skipping file")
+                    break
+                elif userDecide == "y":
+                    print("overwriting file %s" % outputName)
+                    whisper_transcribe(mediafile)
+                    break
+
+if __name__ == '__main__':
+    main()
