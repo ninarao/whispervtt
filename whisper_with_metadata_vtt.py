@@ -195,6 +195,8 @@ for mediafile in glob.glob(f"{arg1}/*{ext}"):
     
     if not os.path.exists(outputFile):
         whisper_transcribe(mediafile)
+    elif args.overwrite == True:
+        whisper_transcribe(mediafile)
     else:
         while True:
             print("output file %s already exists, do you want to overwrite? (y/n)" % outputName)
