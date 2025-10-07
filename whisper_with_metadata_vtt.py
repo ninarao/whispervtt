@@ -12,6 +12,8 @@ from whisper.utils import get_writer
 from datetime import date
 import pandas as pd
 
+# sys.argv = ['whisper_with_metadata_vtt.py', '/Users/nraogra/Desktop/Captioning/metadata_test', '/Users/nraogra/Desktop/Captioning/metadata_test/webvtt_titles.csv']
+
 def valid_directory(path_string):
     if not os.path.isdir(path_string):
         raise argparse.ArgumentTypeError(f"'{path_string}' is not a valid directory.")
@@ -69,8 +71,8 @@ else:
     print("output folder %s already exists" % outputDir)
 
 def get_title():
-    if args.csv == False:
-        TitleLine = ""
+    if args.csv is None:
+        TitleLine = "Title: unknown"
         return TitleLine
     else:
     # read metadata from csv
@@ -87,8 +89,8 @@ def get_title():
             return TitleLine
     
 def get_mediaID():
-    if args.csv == False:
-        MediaIDLine = ""
+    if args.csv is None:
+        MediaIDLine = "Media Identifier: unknown"
         return MediaIDLine
     else:
     # read metadata from csv
@@ -104,9 +106,9 @@ def get_mediaID():
             MediaIDLine = "Media Identifier: unknown"
             return MediaIDLine
 
-def get_language():
+def get_language(mediaf):
     model = whisper.load_model(modelchoice)
-    audio = whisper.load_audio(mediafile)
+    audio = whisper.load_audio(mediaf)
     audio = whisper.pad_or_trim(audio)
     mel = whisper.log_mel_spectrogram(audio, n_mels=model.dims.n_mels).to(model.device)
     _, probs = model.detect_language(mel)
@@ -119,6 +121,12 @@ def get_language():
 def whisper_transcribe(
     audio_path: str,
     ):
+    
+    if langg == "":
+        lango = get_language(audio_path)
+    else:
+        lango = lang_obj3  
+    print(f"language: {lango}")
 
     model = whisper.load_model(modelchoice)
     output_dir = outputDir
@@ -146,6 +154,9 @@ def whisper_transcribe(
 
     vtt_write = get_writer('vtt', output_dir=output_dir)
     vtt_write(result, audio_path, word_options)
+    
+    justName = Path(audio_path).stem
+    sourceFile = os.path.basename(audio_path)
     
     outputVTT = f"{outputDir}/{justName}.vtt"
     
@@ -187,12 +198,6 @@ def main():
         outputName = justName + ".vtt"
         outputFile = os.path.join(outputDir, outputName)
         print(f"processing {sourceFile}")
-        
-        if langg == "":
-            lango = get_language()
-        else:
-            lango = lang_obj3  
-        print(f"language: {lango}")
         
         if not os.path.exists(outputFile):
             whisper_transcribe(mediafile)
