@@ -18,9 +18,12 @@ def valid_directory(path_string):
     return path_string
 
 def valid_csv(path_csv):
-    if not os.path.isfile(path_csv) or path_csv.suffix != ".csv":
+    if not os.path.isfile(path_csv):
         raise argparse.ArgumentTypeError(f"'{path_csv}' is not a valid csv file.")
-    return path_csv
+    if not path_csv.endswith(".csv"):
+        raise argparse.ArgumentTypeError(f"'{path_csv}' is not a valid csv file.")
+    else:
+        return path_csv
 
 parser = argparse.ArgumentParser()
 
@@ -33,11 +36,11 @@ args = parser.parse_args()
 arg1 = args.media_directory
 print('media directory: ',arg1)
 
-if args.csv == True:
+if args.csv is None:
+    print("No csv")
+else:
     arg2 = args.csv
     print('metadata csv: ',arg2)
-else:
-    print("No csv")
 
 if args.overwrite == True:
     print("Existing output files will be overwritten.")
