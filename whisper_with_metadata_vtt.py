@@ -12,8 +12,6 @@ from whisper.utils import get_writer
 from datetime import date
 import pandas as pd
 
-# sys.argv = ['whisper_with_metadata_vtt.py', '/Users/nraogra/Desktop/Captioning/metadata_test', '/Users/nraogra/Desktop/Captioning/metadata_test/webvtt_titles.csv']
-
 def valid_directory(path_string):
     if not os.path.isdir(path_string):
         raise argparse.ArgumentTypeError(f"'{path_string}' is not a valid directory.")
@@ -27,7 +25,7 @@ def valid_csv(path_csv):
 parser = argparse.ArgumentParser()
 
 parser.add_argument("media_directory", type=valid_directory, help="Directory of media files")
-parser.add_argument("-c", "--csv", type=valid_csv, action="store_true", help="Metadata CSV")
+parser.add_argument("-c", "--csv", type=valid_csv, help="Metadata CSV")
 parser.add_argument("-o", "--overwrite", action="store_true", help="overwrite any existing output files")
 
 args = parser.parse_args()
