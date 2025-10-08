@@ -12,7 +12,7 @@ from whisper.utils import get_writer
 from datetime import date
 import pandas as pd
 
-# sys.argv = ['whisper_with_metadata_vtt.py', '/Users/nraogra/Desktop/Captioning/metadata_test', '/Users/nraogra/Desktop/Captioning/metadata_test/webvtt_titles.csv']
+sys.argv = ['whisper_with_metadata_vtt.py', '/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min/data', '-c', '/Users/nraogra/Desktop/test.csv', '-o']
 
 def valid_directory(path_string):
     if not os.path.isdir(path_string):
@@ -70,13 +70,14 @@ if not os.path.exists(outputDir):
 else:
     print("output folder %s already exists" % outputDir)
 
-def get_title():
+def get_title(mediaf):
     if args.csv is None:
         TitleLine = "Title: unknown"
         return TitleLine
     else:
     # read metadata from csv
-        df = pd.read_csv(arg2, dtype="str", index_col="File")
+        sourceFile = os.path.basename(mediaf)
+        df = pd.read_csv(args.csv, dtype="str", index_col="File")
         try:
             Title = df.at[sourceFile, "Title"]
             if pd.isna(df.at[sourceFile, "Title"]):
@@ -88,13 +89,14 @@ def get_title():
             TitleLine = "Title: unknown"
             return TitleLine
     
-def get_mediaID():
+def get_mediaID(mediaf):
     if args.csv is None:
         MediaIDLine = "Media Identifier: unknown"
         return MediaIDLine
     else:
     # read metadata from csv
-        df = pd.read_csv(arg2, dtype="str", index_col="File")
+        sourceFile = os.path.basename(mediaf)
+        df = pd.read_csv(args.csv, dtype="str", index_col="File")
         try:
             MediaID = df.at[sourceFile, "Media Identifier"]
             if pd.isna(df.at[sourceFile, "Media Identifier"]):
@@ -164,8 +166,8 @@ def whisper_transcribe(
     
     ver = (whisper.__version__)
     
-    MediaIDLine = get_mediaID()
-    TitleLine = get_title()
+    MediaIDLine = get_mediaID(audio_path)
+    TitleLine = get_title(audio_path)
 
     with open (outputVTT, 'rt', encoding="utf8") as newVTT:
         data = newVTT.read()
