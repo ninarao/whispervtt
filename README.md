@@ -1,6 +1,10 @@
 # whispervtt
 Runs Whisper over a directory of media files.  For each mp4 and mp3 file, it generates a text transcript and a WebVTT caption file with FADGI metadata, using an optional CSV for Title and Media Identifier.
 
+The CSV file should be set up with these headers: "File", "Title", "Media Identifier". Include the names of each reference file in the "File" column. (For best results, save the CSV as utf-8 encoded.) For example:
+File 	Title 	Media Identifier
+filename.mp4  media_title 	uniqueID 	
+
 Script is customized for Emory Libraries; FADGI metadata is generated from the script or matched from the CSV as follows:
 
 Element | Source
