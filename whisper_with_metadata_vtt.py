@@ -12,7 +12,7 @@ from whisper.utils import get_writer
 from datetime import date
 import pandas as pd
 
-sys.argv = ['whisper_with_metadata_vtt.py', '/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min/data', '-c', '/Users/nraogra/Desktop/test.csv', '-o']
+# sys.argv = ['whisper_with_metadata_vtt.py', '/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min/data', '-c', '/Users/nraogra/Desktop/test.csv', '-o']
 
 def valid_directory(path_string):
     if not os.path.isdir(path_string):
