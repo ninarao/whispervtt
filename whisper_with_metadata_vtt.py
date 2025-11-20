@@ -47,19 +47,26 @@ else:
 if args.overwrite == True:
     print("Existing output files will be overwritten.")
 
-# prompt to choose whisper model
-modelchoice = input("what model do you want to use?\noptions: tiny, base, small, medium, large-v3, turbo\n")
-while modelchoice not in {"tiny", "base", "small", "medium", "large-v3", "turbo"}:
-    print("invalid input.")
-    modelchoice = input("what model do you want to use? options: tiny, base, small, medium, large-v3, turbo\n")
-print(f"model selected: {modelchoice}")
+def choose_model():
+    modelchoice = input("what model do you want to use?\noptions: tiny, base, small, medium, large-v3, turbo\n")
+    while modelchoice not in {"tiny", "base", "small", "medium", "large-v3", "turbo"}:
+        print("invalid input.")
+        modelchoice = input("what model do you want to use? options: tiny, base, small, medium, large-v3, turbo\n")
+    print(f"model selected: {modelchoice}")
+    return modelchoice
 
-# prompt to specify language
-langg = input("enter the content language or leave blank for auto-detect: ")
-if langg != "":
-    lang_find = langcodes.find(langg)
-    lang_obj3 = Language.get(lang_find).to_alpha3()
-    print(f"language: {lang_obj3}")
+def choose_lang():
+    langg = input("enter the content language or leave blank for auto-detect: ")
+    if langg == "":
+        langchoice = None
+        print(f"auto-detecting language")
+        return langchoice
+    elif langg != "":
+        lang_find = langcodes.find(langg)
+        lang_obj3 = Language.get(lang_find).to_alpha3()
+        print(f"language: {lang_obj3}")
+        langchoice = lang_obj3
+        return langchoice
 
 # check for output folder and create if needed
 outputDir = os.path.join(arg1, "output")
@@ -108,8 +115,8 @@ def get_mediaID(mediaf):
             MediaIDLine = "Media Identifier: unknown"
             return MediaIDLine
 
-def get_language(mediaf):
-    model = whisper.load_model(modelchoice)
+def get_language(mediaf, modelo):
+    model = whisper.load_model(modelo)
     audio = whisper.load_audio(mediaf)
     audio = whisper.pad_or_trim(audio)
     mel = whisper.log_mel_spectrogram(audio, n_mels=model.dims.n_mels).to(model.device)
@@ -122,21 +129,23 @@ def get_language(mediaf):
     
 def whisper_transcribe(
     audio_path: str,
+    modell,
+    langchoice
     ):
     
-    if langg == "":
-        lango = get_language(audio_path)
+    if langchoice == None:
+        lango = get_language(audio_path, modell)
     else:
-        lango = lang_obj3  
-    print(f"language: {lango}")
+        lango = langchoice  
+        print(f"language: {lango}")
 
-    model = whisper.load_model(modelchoice)
+    model = whisper.load_model(modell)
     output_dir = outputDir
     options = whisper.DecodingOptions().__dict__.copy()
     options['beam_size'] = 10
     options['best_of'] = 5
     options['task'] = "transcribe"
-    options['language'] = "en" if modelchoice.endswith(".en") else langg if langg != "" else None
+    options['language'] = "en" if modell.endswith(".en") else langchoice if langchoice != None else None
     result = model.transcribe(
         audio_path, 
         verbose=True,
@@ -193,6 +202,8 @@ def whisper_transcribe(
         newVTT.close()
 
 def main():
+    langchoice = choose_lang()
+    modelchoice = choose_model()
     ext = ['.mp4', '.mp3']
     for mediafile in glob.glob(f"{arg1}/*{ext}"):
         justName = Path(mediafile).stem
@@ -200,11 +211,11 @@ def main():
         outputName = justName + ".vtt"
         outputFile = os.path.join(outputDir, outputName)
         print(f"processing {sourceFile}")
-        
+                
         if not os.path.exists(outputFile):
-            whisper_transcribe(mediafile)
+            whisper_transcribe(mediafile, modelchoice, langchoice)
         elif args.overwrite == True:
-            whisper_transcribe(mediafile)
+            whisper_transcribe(mediafile, modelchoice, langchoice)
         else:
             while True:
                 print("output file %s already exists, do you want to overwrite? (y/n)" % outputName)
@@ -214,7 +225,7 @@ def main():
                     break
                 elif userDecide == "y":
                     print("overwriting file %s" % outputName)
-                    whisper_transcribe(mediafile)
+                    whisper_transcribe(mediafile, modelchoice, langchoice)
                     break
 
 if __name__ == '__main__':
