@@ -12,7 +12,13 @@ from whisper.utils import get_writer
 from datetime import date
 import pandas as pd
 
-# sys.argv = ['whisper_with_metadata_vtt.py', '/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min/data', '-c', '/Users/nraogra/Desktop/test.csv', '-o']
+# sys.argv = [
+#     'whisper_with_metadata_vtt.py',
+#     '/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min/data',
+#     '-c',
+#     '/Users/nraogra/Desktop/test.csv',
+#     '-o'
+#     ]
 
 def valid_directory(path_string):
     if not os.path.isdir(path_string):
@@ -27,25 +33,29 @@ def valid_csv(path_csv):
     else:
         return path_csv
 
-parser = argparse.ArgumentParser()
+# sets media directory, optional csv, and overwrite option
+def setup(args_):
+    parser = argparse.ArgumentParser()
 
-parser.add_argument("media_directory", type=valid_directory, help="Directory of media files")
-parser.add_argument("-c", "--csv", type=valid_csv, help="Metadata CSV")
-parser.add_argument("-o", "--overwrite", action="store_true", help="overwrite any existing output files")
+    parser.add_argument(
+        "media_directory",
+        type=valid_directory,
+        help="Directory of media files"
+        )
+    parser.add_argument(
+        "-c", "--csv",
+        type=valid_csv,
+        help="Metadata CSV"
+        )
+    parser.add_argument(
+        "-o",
+        "--overwrite",
+        action="store_true",
+        help="overwrite any existing output files"
+        )
 
-args = parser.parse_args()
-
-arg1 = args.media_directory
-print('media directory: ',arg1)
-
-if args.csv is None:
-    print("No csv")
-else:
-    arg2 = args.csv
-    print('metadata csv: ',arg2)
-
-if args.overwrite == True:
-    print("Existing output files will be overwritten.")
+    args = parser.parse_args(args_)
+    return args
 
 def choose_model():
     modelchoice = input("what model do you want to use?\noptions: tiny, base, small, medium, large-v3, turbo\n")
@@ -59,7 +69,7 @@ def choose_lang():
     langg = input("enter the content language or leave blank for auto-detect: ")
     if langg == "":
         langchoice = None
-        print(f"auto-detecting language")
+        print("auto-detecting language")
         return langchoice
     elif langg != "":
         lang_find = langcodes.find(langg)
@@ -69,22 +79,24 @@ def choose_lang():
         return langchoice
 
 # check for output folder and create if needed
-outputDir = os.path.join(arg1, "output")
-print("checking for output folder...")
-if not os.path.exists(outputDir):
-    os.mkdir(outputDir)
-    print("output folder %s created" % outputDir)
-else:
-    print("output folder %s already exists" % outputDir)
+def output_direct(arg1):
+    outputDir = os.path.join(arg1, "output")
+    print("checking for output folder...")
+    if not os.path.exists(outputDir):
+        os.mkdir(outputDir)
+        print("output folder %s created" % outputDir)
+    else:
+        print("output folder %s already exists" % outputDir)
+    return outputDir
 
-def get_title(mediaf):
-    if args.csv is None:
+def get_title(mediaf, arg2):
+    if arg2 == None:
         TitleLine = "Title: unknown"
         return TitleLine
     else:
     # read metadata from csv
         sourceFile = os.path.basename(mediaf)
-        df = pd.read_csv(args.csv, dtype="str", index_col="File")
+        df = pd.read_csv(arg2, dtype="str", index_col="File")
         try:
             Title = df.at[sourceFile, "Title"]
             if pd.isna(df.at[sourceFile, "Title"]):
@@ -96,14 +108,14 @@ def get_title(mediaf):
             TitleLine = "Title: unknown"
             return TitleLine
     
-def get_mediaID(mediaf):
-    if args.csv is None:
+def get_mediaID(mediaf, arg2):
+    if arg2 == None:
         MediaIDLine = "Media Identifier: unknown"
         return MediaIDLine
     else:
     # read metadata from csv
         sourceFile = os.path.basename(mediaf)
-        df = pd.read_csv(args.csv, dtype="str", index_col="File")
+        df = pd.read_csv(arg2, dtype="str", index_col="File")
         try:
             MediaID = df.at[sourceFile, "Media Identifier"]
             if pd.isna(df.at[sourceFile, "Media Identifier"]):
@@ -130,7 +142,9 @@ def get_language(mediaf, modelo):
 def whisper_transcribe(
     audio_path: str,
     modell,
-    langchoice
+    langchoice,
+    outputDir,
+    arg2
     ):
     
     if langchoice == None:
@@ -175,8 +189,8 @@ def whisper_transcribe(
     
     ver = (whisper.__version__)
     
-    MediaIDLine = get_mediaID(audio_path)
-    TitleLine = get_title(audio_path)
+    MediaIDLine = get_mediaID(audio_path, arg2)
+    TitleLine = get_title(audio_path, arg2)
 
     with open (outputVTT, 'rt', encoding="utf8") as newVTT:
         data = newVTT.read()
@@ -201,9 +215,26 @@ def whisper_transcribe(
         newVTT.write(data)
         newVTT.close()
 
-def main():
+def main(args_):
+    args = setup(args_)
+    
+    arg1 = args.media_directory
+    print('media directory: ',arg1)
+    
+    if args.csv == None:
+        arg2 = None
+        print("No csv")
+    else:
+        arg2 = args.csv
+        print('metadata csv: ',arg2)
+
+    if args.overwrite == True:
+        print("Existing output files will be overwritten.")
+    
+    outputDir = output_direct(arg1)
     langchoice = choose_lang()
     modelchoice = choose_model()
+    
     ext = ['.mp4', '.mp3']
     for mediafile in glob.glob(f"{arg1}/*{ext}"):
         justName = Path(mediafile).stem
@@ -213,9 +244,9 @@ def main():
         print(f"processing {sourceFile}")
                 
         if not os.path.exists(outputFile):
-            whisper_transcribe(mediafile, modelchoice, langchoice)
+            whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
         elif args.overwrite == True:
-            whisper_transcribe(mediafile, modelchoice, langchoice)
+            whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
         else:
             while True:
                 print("output file %s already exists, do you want to overwrite? (y/n)" % outputName)
@@ -225,8 +256,8 @@ def main():
                     break
                 elif userDecide == "y":
                     print("overwriting file %s" % outputName)
-                    whisper_transcribe(mediafile, modelchoice, langchoice)
+                    whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
                     break
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
