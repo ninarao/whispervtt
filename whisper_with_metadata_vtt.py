@@ -206,7 +206,8 @@ def whisper_transcribe(
             f"File Creation Date: {today}",
             f"{TitleLine}",
             "Origin History: Created by Emory Libraries Media Preservation",
-            f"Local Usage Element: Software version: v{ver}; Review history: unreviewed"
+            f"Local Usage Element: Software version: v{ver}",
+            "Local Usage Element: Review history: unreviewed"
             ]
         mString = '\n'.join(mList)
         data = data.replace('WEBVTT', mString)
