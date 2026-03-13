@@ -8,10 +8,10 @@ import datetime
 import shutil
 import whisper_with_metadata_vtt as whisper
 
-sys.argv = [
-    'run_whisper.py',
-    '/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min/data',
-    ]
+# sys.argv = [
+#     'run_whisper.py',
+#     '/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min/data',
+#     ]
 
 '''
 script to find new video and audio files and run whispervtt on them
