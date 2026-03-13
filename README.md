@@ -28,4 +28,4 @@ Local Usage Element: Review history | hard-coded
 - [langcodes](https://pypi.org/project/langcodes/)
 
 ## run_whisper.py
-run_whisper.py is an optional script that finds new video and audio files in a folder and runs whispervtt on them.
+run_whisper.py is an optional script that finds new (created within the previous 24 hours) video and audio files in a folder and runs whispervtt on them.
