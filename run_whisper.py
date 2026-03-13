@@ -24,7 +24,6 @@ def get_media_list(reviewed_dir, time_minus_24, timenow):
     for media in Path(reviewed_dir).rglob('*'):
         if media.suffix in aud_formats or media.suffix in vid_formats:
             c_datestamp = get_time(media)
-            print(c_datestamp)
             if time_minus_24 <= c_datestamp <= timenow:
                 mediaName = os.path.basename(media)
                 print(f'this was made in the past day: {mediaName} {c_datestamp}')
