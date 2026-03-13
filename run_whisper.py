@@ -2,6 +2,7 @@
 
 import os
 import sys
+import platform
 from pathlib import Path
 import datetime
 import shutil
@@ -14,7 +15,6 @@ sys.argv = [
 
 '''
 script to find new video and audio files and run whispervtt on them
-set up for windows; creation date may work differently on mac or linux
 '''
 
 def get_media_list(reviewed_dir, time_minus_24, timenow):
@@ -23,8 +23,8 @@ def get_media_list(reviewed_dir, time_minus_24, timenow):
     aud_formats = ['.wav', '.mp3']
     for media in Path(reviewed_dir).rglob('*'):
         if media.suffix in aud_formats or media.suffix in vid_formats:
-            c_timestamp = os.path.getctime(media)
-            c_datestamp = datetime.datetime.fromtimestamp(c_timestamp)
+            c_datestamp = get_time(media)
+            print(c_datestamp)
             if time_minus_24 <= c_datestamp <= timenow:
                 mediaName = os.path.basename(media)
                 print(f'this was made in the past day: {mediaName} {c_datestamp}')
@@ -37,7 +37,23 @@ def get_media_list(reviewed_dir, time_minus_24, timenow):
         str_media_list = []
     return str_media_list
 
-def main():
+def get_time(media):
+    if platform.system() == 'Windows':
+        c_timestamp = os.path.getctime(media)
+        c_datestamp = datetime.datetime.fromtimestamp(c_timestamp)
+        return c_datestamp
+    else:
+        stat = os.stat(media)
+        try:
+            c_timestamp = stat.st_birthtime
+            c_datestamp = datetime.datetime.fromtimestamp(c_timestamp)
+        except AttributeError:
+            c_timestamp = stat.st_mtime
+            c_datestamp = datetime.datetime.fromtimestamp(c_timestamp)
+        finally:
+            return c_datestamp
+
+def main(reviewed_dir):
     reviewed_dir = sys.argv[1]
     timenow = datetime.datetime.now()
     print(f'time now: {timenow}')
