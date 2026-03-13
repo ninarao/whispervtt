@@ -26,3 +26,6 @@ Local Usage Element: Review history | hard-coded
 - [Whisper](https://github.com/openai/whisper)
 - [ffmpeg](https://ffmpeg.org/)
 - [langcodes](https://pypi.org/project/langcodes/)
+
+## run_whisper.py
+run_whisper.py is an optional script that finds new video and audio files in a folder and runs whispervtt on them.
