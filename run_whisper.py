@@ -6,6 +6,7 @@ import platform
 from pathlib import Path
 import datetime
 import shutil
+import time
 import whisper_with_metadata_vtt as whisper
 
 # sys.argv = [
@@ -52,35 +53,60 @@ def get_time(media):
         finally:
             return c_datestamp
 
+def run_whisper(media_list, vtt_txt_dest, processed_media, reviewed_dir):
+    os.chdir(reviewed_dir)
+    for file in media_list:
+        try:
+            whisper.whisper_transcribe(file, 'large-v3', None, vtt_txt_dest, None)
+            print(f'ran whisper on file {file}')
+            generate_log(log_source, timenow, f'ran whisper on file {file}')
+            source_path = os.path.join(reviewed_dir, file)
+            mediaName = os.path.basename(file)
+            dest_path = os.path.join(processed_media, mediaName)
+            try:
+                shutil.move(source_path, dest_path)
+                generate_log(log_source, timenow, f'moved {file} to {processed_media}')
+            except shutil.Error as e:
+                print(f'could not move {file} due to error: "{e}"')
+                generate_log(log_source, timenow, f'could not move {file} due to error: "{e}"')
+                continue
+        except Exception as e:
+            print(f'could not run whisper on file {file} due to error: "{e}"')
+            generate_log(log_source, timenow, f'could not run whisper on file {file} due to error: "{e}"')
+            continue
+
+def generate_log(log, timenow, what2log):
+    if not os.path.isfile(log):
+        with open(log, "w", encoding='utf-8') as f:
+            f.write(timenow.strftime("%Y-%m-%d %H:%M:%S%p")
+                     + '\n' + what2log + '\n')
+    else:
+        with open(log, "a", encoding='utf-8') as f:
+            f.write(timenow.strftime("%Y-%m-%d %H:%M:%S%p")
+                     + '\n' + what2log + '\n')
+
 def main(reviewed_dir):
     reviewed_dir = sys.argv[1]
     timenow = datetime.datetime.now()
     print(f'time now: {timenow}')
     time_minus_24 = timenow - datetime.timedelta(hours=24)
     print(f'time minus 24: {time_minus_24}')
-    vtt_txt_dest = f'{reviewed_dir}/media_run'
-    processed_files = f'{reviewed_dir}/processed_files'
+    vtt_txt_dest = f'{reviewed_dir}/vtt_txt_files'
+    processed_media = f'{reviewed_dir}/processed_media'
+    log_source = f'{reviewed_dir}/run_whisp_log.txt'
     os.chdir(reviewed_dir)
     if not os.path.exists(vtt_txt_dest):
         os.makedirs(vtt_txt_dest)
-    if not os.path.exists(processed_files):
-        os.makedirs(processed_files)
+    if not os.path.exists(processed_media):
+        os.makedirs(processed_media)
     media_list = get_media_list(reviewed_dir, time_minus_24, timenow)
-    print(f'media list: \n{media_list}')
     if media_list:
-        for file in media_list:
-            try:
-                whisper.whisper_transcribe(file, 'large-v3', None, vtt_txt_dest, None)
-            except Exception as e:
-                print(f'error "{e}" with running whisper on file {file}')
-                continue
-            else:
-                source_path = os.path.join(reviewed_dir, file)
-                dest_path = os.path.join(processed_files, file)
-                try:
-                    shutil.move(source_path, dest_path)
-                except shutil.Error as e:
-                    print(f'could not move {file} due to error: "{e}"')
+        print(f'media list: \n{media_list}')
+        generate_log(log_source, timenow, f'media list: \n{media_list}')
+        run_whisper(media_list, vtt_txt_dest, processed_media, reviewed_dir)
+    else:
+        print('no files in media list')
+        generate_log(log_source, timenow, 'no files in media list')
 
 if __name__ == '__main__':
     main(sys.argv[1:])
