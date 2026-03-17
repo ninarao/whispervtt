@@ -6,7 +6,7 @@ import platform
 from pathlib import Path
 import datetime
 import shutil
-import whisper_with_metadata_vtt as whisper
+import whispervtt as whisper
 
 # sys.argv = [
 #     'run_whisper.py',
