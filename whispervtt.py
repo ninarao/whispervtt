@@ -208,8 +208,7 @@ def whisper_transcribe(
             f"File Creation Date: {today}",
             f"{TitleLine}",
             "Origin History: Created by Emory Libraries Media Preservation",
-            f"Local Usage Element: Software version: v{ver}",
-            "Local Usage Element: Review history: unreviewed"
+            f"Local Usage Element: [software version] v{ver}; [review history] unreviewed"
             ]
         mString = '\n'.join(mList)
         data = data.replace('WEBVTT', mString)
@@ -238,29 +237,30 @@ def main(args_):
     langchoice = choose_lang()
     modelchoice = choose_model()
     
-    ext = ['.mp4', '.mp3']
+    ext = ['.mp4', '.mp3', '.wav']
     for mediafile in glob.glob(f"{arg1}/*{ext}"):
-        justName = Path(mediafile).stem
-        sourceFile = os.path.basename(mediafile)
-        outputName = justName + ".vtt"
-        outputFile = os.path.join(outputDir, outputName)
-        print(f"processing {sourceFile}")
-                
-        if not os.path.exists(outputFile):
-            whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
-        elif args.overwrite == True:
-            whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
-        else:
-            while True:
-                print("output file %s already exists, do you want to overwrite? (y/n)" % outputName)
-                userDecide = input()
-                if userDecide == "n":
-                    print("skipping file")
-                    break
-                elif userDecide == "y":
-                    print("overwriting file %s" % outputName)
-                    whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
-                    break
+        if os.path.isfile(mediafile):
+            justName = Path(mediafile).stem
+            sourceFile = os.path.basename(mediafile)
+            outputName = justName + ".vtt"
+            outputFile = os.path.join(outputDir, outputName)
+            print(f"processing {sourceFile}")
+                    
+            if not os.path.exists(outputFile):
+                whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
+            elif args.overwrite == True:
+                whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
+            else:
+                while True:
+                    print("output file %s already exists, do you want to overwrite? (y/n)" % outputName)
+                    userDecide = input()
+                    if userDecide == "n":
+                        print("skipping file")
+                        break
+                    elif userDecide == "y":
+                        print("overwriting file %s" % outputName)
+                        whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
+                        break
 
 if __name__ == '__main__':
     main(sys.argv[1:])
