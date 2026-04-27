@@ -6,6 +6,11 @@ File | Title |	Media Identifier
 --- | --- | ---
 filename.mp4 | media_title | uniqueID 	
 
+Optional flags:<br>
+`-c` [path to csv file] include CSV file for title and media identifier<br>
+`-o` overwrite any existing output files<br>
+`-t` include FADGI metadata header in text transcript files<br>
+
 Script is customized for Emory Libraries; FADGI metadata is generated from the script or matched from the CSV as follows:
 
 Element | Source
