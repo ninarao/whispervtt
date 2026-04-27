@@ -15,6 +15,7 @@ import pandas as pd
 # sys.argv = [
 #     'whispervtt.py',
 #     '/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min/data',
+#     '-t',
 #     '-o'
 #     ]
 
@@ -51,7 +52,13 @@ def setup(args_):
         action="store_true",
         help="overwrite any existing output files"
         )
-
+    parser.add_argument(
+        "-t",
+        "--txtheader",
+        action="store_true",
+        help="add FADGI header to txt file"
+        )
+    
     args = parser.parse_args(args_)
     return args
 
@@ -141,13 +148,7 @@ def get_language(mediaf, modelo):
     alpha3 = lang_obj.to_alpha3()
     return alpha3
     
-def whisper_transcribe(
-    audio_path: str,
-    modell,
-    langchoice,
-    outputDir,
-    arg2
-    ):
+def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt_header):
     
     if langchoice == None:
         lango = get_language(audio_path, modell)
@@ -188,7 +189,6 @@ def whisper_transcribe(
     outputVTT = f"{outputDir}/{justName}.vtt"
     
     today = str(date.today())
-    
     ver = (whisper.__version__)
     
     MediaIDLine = get_mediaID(audio_path, arg2)
@@ -216,6 +216,34 @@ def whisper_transcribe(
     with open (outputVTT, 'wt', encoding="utf8") as newVTT:
         newVTT.write(data)
         newVTT.close()
+    
+    if txt_header == True:
+        outputTXT = f"{outputDir}/{justName}.txt"
+        with open (outputTXT, 'rt', encoding="utf8") as newTXT:
+            lines = newTXT.readlines()
+            print(lines[0])
+            data = newTXT.read()
+            mList = [
+                "Type: transcript",
+                f"Language: {lango}",
+                "Responsible Party: US, Emory University",
+                f"{MediaIDLine}",
+                f"Originating File: {sourceFile}",
+                "File Creator: Whisper",
+                f"File Creation Date: {today}",
+                f"{TitleLine}",
+                "Origin History: Created by Emory Libraries Media Preservation",
+                f"Local Usage Element: [software version] v{ver}; [review history] unreviewed",
+                "",
+                f"{lines[0]}"
+                ]
+            mString = '\n'.join(mList)
+            print(mString)
+            lines[0] = mString
+            newTXT.close()
+        with open (outputTXT, 'wt', encoding="utf8") as newTXT:
+            newTXT.writelines(lines)
+            newTXT.close()
 
 def main(args_):
     args = setup(args_)
@@ -229,9 +257,11 @@ def main(args_):
     else:
         arg2 = args.csv
         print('metadata csv: ',arg2)
-
     if args.overwrite == True:
         print("Existing output files will be overwritten.")
+    if args.txtheader == True:
+        print("FADGI header will be added to txt files.")
+        txt_header = True
     
     outputDir = output_direct(arg1)
     langchoice = choose_lang()
@@ -245,11 +275,10 @@ def main(args_):
             outputName = justName + ".vtt"
             outputFile = os.path.join(outputDir, outputName)
             print(f"processing {sourceFile}")
-                    
             if not os.path.exists(outputFile):
-                whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
+                whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2, txt_header)
             elif args.overwrite == True:
-                whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
+                whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2, txt_header)
             else:
                 while True:
                     print("output file %s already exists, do you want to overwrite? (y/n)" % outputName)
@@ -259,7 +288,7 @@ def main(args_):
                         break
                     elif userDecide == "y":
                         print("overwriting file %s" % outputName)
-                        whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2)
+                        whisper_transcribe(mediafile, modelchoice, langchoice, outputDir, arg2, txt_header)
                         break
 
 if __name__ == '__main__':
