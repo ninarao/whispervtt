@@ -23,7 +23,7 @@ def get_file_list(file_dir):
     file_list = []
     file_formats = ['.vtt', '.txt']
     for file in Path(file_dir).rglob('*'):
-        if os.path.isfile(file):
+        if file.is_file():
             if file.suffix in file_formats:
                 file_list.append(file)
             else:
@@ -104,9 +104,9 @@ def generate_log(log, timenow, what2log):
                      + '\n' + what2log + '\n')
 
 def main(file_dir):
-    file_dir = sys.argv[1]
-    sync_dir = sys.argv[2]
-    review_dir = sys.argv[3]
+    file_dir = Path(sys.argv[1])
+    sync_dir = Path(sys.argv[2])
+    review_dir = Path(sys.argv[3])
     log_source = f'{file_dir}/move_vtt_txt_log.log'
     timenow = datetime.datetime.now()
     os.chdir(file_dir)
