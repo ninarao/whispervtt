@@ -33,7 +33,7 @@ def get_media_list(reviewed_dir, time_minus_24, timenow):
     if media_list:
         str_media_list = [os.fspath(p) for p in media_list]
     else:
-        str_media_list = []
+        str_media_list = ""
     return str_media_list
 
 def get_time(media):
@@ -86,8 +86,6 @@ def generate_log(log, timenow, what2log):
                      + '\n' + what2log + '\n')
 
 def main(args):
-    for arg in args:
-        print(f'argument: {arg}')
     reviewed_dir = sys.argv[1]
     timenow = datetime.datetime.now()
     print(f'time now: {timenow}')
@@ -95,14 +93,15 @@ def main(args):
     print(f'time minus 24: {time_minus_24}')
     vtt_txt_dest = f'{reviewed_dir}/vtt_txt_files'
     processed_media = f'{reviewed_dir}/processed_media'
-    log_source = f'{reviewed_dir}/run_whisp_log.log'
+    logName = 'run_whisp_log.log'
+    log_source = os.path.join(file_dir, logName)
     os.chdir(reviewed_dir)
     if not os.path.exists(vtt_txt_dest):
         os.makedirs(vtt_txt_dest)
     if not os.path.exists(processed_media):
         os.makedirs(processed_media)
     media_list = get_media_list(reviewed_dir, time_minus_24, timenow)
-    if media_list:
+    if media_list != "":
         print(f'media list: \n{media_list}')
         generate_log(log_source, timenow, f'media list: \n{media_list}')
         run_whisper(media_list, vtt_txt_dest, processed_media, reviewed_dir, log_source, timenow)
