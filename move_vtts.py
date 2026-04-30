@@ -45,8 +45,6 @@ def copy_files(file_list, file_dir, sync_dir, review_dir, log_source, timenow):
         datesuffix = str(timenow.strftime("%Y%m%d-%H%M"))
         source_path = os.path.join(file_dir, fileName)
         dest_path = os.path.join(sync_dir, fileName)
-        print(f'source: {source_path}')
-        print(f'dest: {dest_path}')
         if os.path.exists(dest_path):
             newName = justName + "_" + datesuffix + fileExt
             print(f'file {justName}{fileExt} already exists in {sync_dir}, copying as {newName}')
@@ -75,8 +73,6 @@ def move_file(fileName, justName, file_dir, fileExt, review_dir, log_source, dat
     os.chdir(file_dir)
     source_path = os.path.join(file_dir, fileName)
     dest_path = os.path.join(review_dir, fileName)
-    print(source_path)
-    print(dest_path)
     if os.path.exists(dest_path):
         newName = justName + "_" + datesuffix + fileExt
         print(f'file {justName}{fileExt} already exists in {review_dir}, moving as {newName}')
