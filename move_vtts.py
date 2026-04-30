@@ -30,10 +30,10 @@ def get_file_list(file_dir):
                 continue
         else:
             continue
-        if file_list:
-            str_file_list = [os.fspath(p) for p in file_list]
-        else:
-            str_file_list = ""
+    if file_list:
+        str_file_list = [os.fspath(p) for p in file_list]
+    else:
+        str_file_list = ""
     return str_file_list
 
 def copy_files(file_list, file_dir, sync_dir, review_dir, log_source, timenow):
@@ -45,6 +45,8 @@ def copy_files(file_list, file_dir, sync_dir, review_dir, log_source, timenow):
         datesuffix = str(timenow.strftime("%Y%m%d-%H%M"))
         source_path = os.path.join(file_dir, fileName)
         dest_path = os.path.join(sync_dir, fileName)
+        print(f'source: {source_path}')
+        print(f'dest: {dest_path}')
         if os.path.exists(dest_path):
             newName = justName + "_" + datesuffix + fileExt
             print(f'file {justName}{fileExt} already exists in {sync_dir}, copying as {newName}')
@@ -107,11 +109,12 @@ def main(file_dir):
     file_dir = Path(sys.argv[1])
     sync_dir = Path(sys.argv[2])
     review_dir = Path(sys.argv[3])
-    log_source = f'{file_dir}/move_vtt_txt_log.log'
+    logName = 'move_vtt_txt_log.log'
+    log_source = os.path.join(file_dir, logName)
     timenow = datetime.datetime.now()
     os.chdir(file_dir)
     file_list = get_file_list(file_dir)
-    if file_list:
+    if file_list != "":
         print('vtt and txt list:')
         print(*file_list, sep='\n')
         generate_log(log_source, timenow, f'vtt and txt list: \n{file_list}')

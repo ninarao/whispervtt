@@ -54,10 +54,11 @@ def get_time(media):
 
 def run_whisper(media_list, vtt_txt_dest, processed_media, reviewed_dir, log_source, timenow):
     os.chdir(reviewed_dir)
+    txt_header = True
     for file in media_list:
         mediaName = os.path.basename(file)
         try:
-            whisper.whisper_transcribe(file, 'large-v3', None, vtt_txt_dest, None)
+            whisper.whisper_transcribe(file, 'large-v3', None, vtt_txt_dest, None, txt_header)
             print(f'ran whisper on file {mediaName}')
             generate_log(log_source, timenow, f'ran whisper on file {mediaName}')
             source_path = os.path.join(reviewed_dir, file)
@@ -84,7 +85,9 @@ def generate_log(log, timenow, what2log):
             f.write(timenow.strftime("%Y-%m-%d %H:%M:%S%p")
                      + '\n' + what2log + '\n')
 
-def main(reviewed_dir):
+def main(args):
+    for arg in args:
+        print(f'argument: {arg}')
     reviewed_dir = sys.argv[1]
     timenow = datetime.datetime.now()
     print(f'time now: {timenow}')
@@ -92,7 +95,7 @@ def main(reviewed_dir):
     print(f'time minus 24: {time_minus_24}')
     vtt_txt_dest = f'{reviewed_dir}/vtt_txt_files'
     processed_media = f'{reviewed_dir}/processed_media'
-    log_source = f'{reviewed_dir}/run_whisp_log.txt'
+    log_source = f'{reviewed_dir}/run_whisp_log.log'
     os.chdir(reviewed_dir)
     if not os.path.exists(vtt_txt_dest):
         os.makedirs(vtt_txt_dest)
