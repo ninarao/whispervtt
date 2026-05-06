@@ -8,10 +8,10 @@ import datetime
 import shutil
 import whispervtt as whisper
 
-# sys.argv = [
-#     'run_whisper.py',
-#     '/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min/data',
-#     ]
+sys.argv = [
+    'run_whisper.py',
+    '/Users/nraogra/Desktop/Captioning/whisperdemo/vkttt_7min/data',
+    ]
 
 '''
 script to find new video and audio files and run whispervtt on them
@@ -33,7 +33,7 @@ def get_media_list(reviewed_dir, time_minus_24, timenow):
     if media_list:
         str_media_list = [os.fspath(p) for p in media_list]
     else:
-        str_media_list = ""
+        str_media_list = []
     return str_media_list
 
 def get_time(media):
@@ -85,23 +85,25 @@ def generate_log(log, timenow, what2log):
             f.write(timenow.strftime("%Y-%m-%d %H:%M:%S%p")
                      + '\n' + what2log + '\n')
 
-def main(args):
-    reviewed_dir = sys.argv[1]
+def main(reviewed_dir):
+    reviewed_dir = Path(sys.argv[1])
     timenow = datetime.datetime.now()
     print(f'time now: {timenow}')
     time_minus_24 = timenow - datetime.timedelta(hours=24)
     print(f'time minus 24: {time_minus_24}')
-    vtt_txt_dest = f'{reviewed_dir}/vtt_txt_files'
-    processed_media = f'{reviewed_dir}/processed_media'
-    logName = 'run_whisp_log.log'
-    log_source = os.path.join(file_dir, logName)
+    vtfolder = 'vtt_txt_files'
+    vtt_txt_dest = os.path.join(reviewed_dir, vtfolder)
+    procfolder = 'processed_media'
+    processed_media = os.path.join(reviewed_dir, procfolder)
+    logname = 'run_whisp_log.txt'
+    log_source = os.path.join(reviewed_dir, logname)
     os.chdir(reviewed_dir)
     if not os.path.exists(vtt_txt_dest):
         os.makedirs(vtt_txt_dest)
     if not os.path.exists(processed_media):
         os.makedirs(processed_media)
     media_list = get_media_list(reviewed_dir, time_minus_24, timenow)
-    if media_list != "":
+    if media_list:
         print(f'media list: \n{media_list}')
         generate_log(log_source, timenow, f'media list: \n{media_list}')
         run_whisper(media_list, vtt_txt_dest, processed_media, reviewed_dir, log_source, timenow)
