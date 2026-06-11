@@ -264,6 +264,8 @@ def main(args_):
     if args.txtheader == True:
         print("FADGI header will be added to txt files.")
         txt_header = True
+    else:
+        txt_header = False
     
     outputDir = output_direct(arg1)
     langchoice = choose_lang()
