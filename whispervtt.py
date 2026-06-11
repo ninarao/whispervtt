@@ -85,7 +85,9 @@ def choose_lang():
                 print(f"language: {lang_obj3}")
                 return langchoice
             except LookupError as e:
-                print(f'error: {e}')
+                print(f'error: {e}, auto-detecting language')
+                langchoice = None
+                return langchoice
 
 # check for output folder and create if needed
 def output_direct(arg1):
