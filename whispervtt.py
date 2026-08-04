@@ -103,7 +103,6 @@ def get_title(mediaf, arg2):
         TitleLine = "Title: unknown"
         return TitleLine
     else:
-    # read metadata from csv
         sourceFile = os.path.basename(mediaf)
         df = pd.read_csv(arg2, dtype="str", index_col="File")
         try:
@@ -122,7 +121,6 @@ def get_mediaID(mediaf, arg2):
         MediaIDLine = "Media Identifier: unknown"
         return MediaIDLine
     else:
-    # read metadata from csv
         sourceFile = os.path.basename(mediaf)
         df = pd.read_csv(arg2, dtype="str", index_col="File")
         try:
@@ -149,7 +147,6 @@ def get_language(mediaf, modelo):
     return alpha3
     
 def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt_header):
-    
     if langchoice == None:
         lango = get_language(audio_path, modell)
     else:
@@ -205,11 +202,11 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
             "Responsible Party: US, Emory University",
             f"{MediaIDLine}",
             f"Originating File: {sourceFile}",
-            "File Creator: Whisper",
+            f"File Creator: Whisper v{ver}",
             f"File Creation Date: {today}",
             f"{TitleLine}",
             "Origin History: Created by Emory Libraries Media Preservation",
-            f"Local Usage Element: [software version] v{ver}; [review history] unreviewed"
+            "_Review History: unreviewed"
             ]
         mString = '\n'.join(mList)
         data = data.replace('WEBVTT', mString)
@@ -225,17 +222,16 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
             print(lines[0])
             data = newTXT.read()
             mList = [
-                "NOTE",
                 "Type: transcript",
                 f"Language: {lango}",
                 "Responsible Party: US, Emory University",
                 f"{MediaIDLine}",
                 f"Originating File: {sourceFile}",
-                "File Creator: Whisper",
+                f"File Creator: Whisper v{ver}",
                 f"File Creation Date: {today}",
                 f"{TitleLine}",
                 "Origin History: Created by Emory Libraries Media Preservation",
-                f"Local Usage Element: [software version] v{ver}; [review history] unreviewed",
+                "_Review History: unreviewed",
                 "",
                 f"{lines[0]}"
                 ]
@@ -249,10 +245,8 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
 
 def main(args_):
     args = setup(args_)
-    
     arg1 = args.media_directory
     print('media directory: ',arg1)
-    
     if args.csv == None:
         arg2 = None
         print("No csv")
