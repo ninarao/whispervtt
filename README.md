@@ -20,7 +20,7 @@ Language | auto-detected by Whisper or supplied by user
 Responsible Party | hard-coded
 Media Identifier | matched from CSV
 Originating File | generated from media file
-File Creator | hard-coded/version generated from script
+File Creator | hard-coded/version info generated from script
 File Creation Date | generated from script
 Title | matched from CSV
 Origin History | hard-coded
