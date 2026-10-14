@@ -9,8 +9,10 @@ from langcodes import Language
 import langcodes
 import whisper
 from whisper.utils import get_writer
-from datetime import date
+from datetime import date, timedelta
 import pandas as pd
+import json
+# import numpy as np
 
 # sys.argv = [
 #     'whispervtt.py',
@@ -145,7 +147,44 @@ def get_language(mediaf, modelo):
     lang_obj = Language.get(alpha2)
     alpha3 = lang_obj.to_alpha3()
     return alpha3
-    
+
+def parse_json(result):
+    seg = result.get("segments", {})
+    file_probs = []
+    seg_attrs = []
+    for x in seg:
+        id = x["id"]
+        start_np = x["start"]
+        start = timedelta(seconds=float(start_np))
+        end_np = x["end"]
+        end = timedelta(seconds=float(end_np))
+        text = x["text"]
+        words = x.get("words", "unknown")
+        seg_probs = []
+        for w in words:
+            word = w["word"]
+            prob_np = w["probability"]
+            file_probs.append(prob_np)
+            seg_probs.append(prob_np)
+        seg_avg = sum(seg_probs) / len(seg_probs)
+        seg_attrs.append([id, seg_avg, start, end, text])
+    avg_word_prob = sum(file_probs) / len(file_probs)
+    print(f"{avg_word_prob:.2%}")
+    if avg_word_prob < 80:
+        print('warning: average word probability is less than 80%')
+        check_seg = [seg for seg in seg_attrs if seg[1] < .80]
+        readable_check_seg = []
+        for seg in check_seg:
+            id = seg[0]
+            percent = f"{seg[1]:.2%}"
+            start = str(seg[2])
+            end = str(seg[3])
+            text = seg[4]
+            readable_check_seg.append([id, percent, start, end, text])
+        print(readable_check_seg)
+        
+    return avg_word_prob
+
 def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt_header):
     if langchoice == None:
         lango = get_language(audio_path, modell)
@@ -172,6 +211,11 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
     txt_write = get_writer('txt', output_dir=output_dir)
     txt_write(result, audio_path)
     
+    json_write = get_writer('json', output_dir=output_dir)
+    json_write(result, audio_path)
+    avg_word_prob = parse_json(result)
+    print(f'average word probability for file: {avg_word_prob:.2%}')
+
     word_options = {
         "max_line_count": 2,
         "max_line_width": 32
@@ -219,7 +263,6 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
         outputTXT = f"{outputDir}/{justName}.txt"
         with open (outputTXT, 'rt', encoding="utf8") as newTXT:
             lines = newTXT.readlines()
-            print(lines[0])
             data = newTXT.read()
             mList = [
                 "Type: transcript",
@@ -236,7 +279,6 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
                 f"{lines[0]}"
                 ]
             mString = '\n'.join(mList)
-            print(mString)
             lines[0] = mString
             newTXT.close()
         with open (outputTXT, 'wt', encoding="utf8") as newTXT:
