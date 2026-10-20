@@ -169,21 +169,41 @@ def parse_json(result):
         seg_avg = sum(seg_probs) / len(seg_probs)
         seg_attrs.append([id, seg_avg, start, end, text])
     avg_word_prob = sum(file_probs) / len(file_probs)
-    print(f"{avg_word_prob:.2%}")
-    if avg_word_prob < 80:
-        print('warning: average word probability is less than 80%')
-        check_seg = [seg for seg in seg_attrs if seg[1] < .80]
-        readable_check_seg = []
-        for seg in check_seg:
-            id = seg[0]
-            percent = f"{seg[1]:.2%}"
+    return avg_word_prob, seg_attrs
+
+def get_segments(seg_attrs):
+    check_seg = [seg for seg in seg_attrs if seg[1] < .80]
+    readable_check_seg = []
+    for seg in check_seg:
+        id = seg[0]
+        percent = f"{seg[1]:.2%}"
+        start = str(seg[2])
+        end = str(seg[3])
+        text = seg[4]
+        readable_check_seg.append([id, percent, start, end, text])
+    return readable_check_seg
+        
+def log_bad_segments(avg_word_prob, readable_check_seg, justName, output_dir):
+    log = f"{output_dir}/{justName}_low-prob-segments.txt"
+    str_prob = f"{avg_word_prob:.2%}"
+    with open(log, "a", encoding='utf-8') as f:
+        f.write(justName + '\n' + 'Average Word Probability: ' + str_prob + '\n\n')
+        for seg in readable_check_seg:
+            id = str(seg[0])
+            percent = seg[1]
             start = str(seg[2])
             end = str(seg[3])
             text = seg[4]
-            readable_check_seg.append([id, percent, start, end, text])
-        print(readable_check_seg)
-        
-    return avg_word_prob
+            f.write('Segment ' + id + ':\n')
+            f.write('\t' + 'Avg Word Probability ' + percent + '\n')
+            f.write('\t' + 'Start Time: ' + start + '\n')
+            f.write('\t' + 'End Time: ' + end + '\n')
+            f.write('\t' + 'Text:' + text + '\n')
+            print(f'Segment {seg[0]}: Avg Word Probability {seg[1]}')
+            print(f'Start Time: {seg[2]}')
+            print(f'End Time: {seg[3]}')
+            print(f'Text: {seg[4]}')
+    f.close()
 
 def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt_header):
     if langchoice == None:
@@ -211,10 +231,18 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
     txt_write = get_writer('txt', output_dir=output_dir)
     txt_write(result, audio_path)
     
+    justName = Path(audio_path).stem
+    
     json_write = get_writer('json', output_dir=output_dir)
     json_write(result, audio_path)
-    avg_word_prob = parse_json(result)
+    avg_word_prob, seg_attrs = parse_json(result)
     print(f'average word probability for file: {avg_word_prob:.2%}')
+    if avg_word_prob < 80:
+        print('warning: average word probability is less than 80%')
+        readable_check_seg = get_segments(seg_attrs)
+    
+    if readable_check_seg:
+        log_bad_segments(avg_word_prob, readable_check_seg, justName, output_dir)
 
     word_options = {
         "max_line_count": 2,
@@ -224,7 +252,6 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
     vtt_write = get_writer('vtt', output_dir=output_dir)
     vtt_write(result, audio_path, word_options)
     
-    justName = Path(audio_path).stem
     sourceFile = os.path.basename(audio_path)
     
     outputVTT = f"{outputDir}/{justName}.vtt"
