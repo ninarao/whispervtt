@@ -1,5 +1,5 @@
 # whispervtt
-Runs Whisper over a directory of media files.  For each mp4 and mp3 file, it generates a text transcript and a WebVTT caption file with FADGI metadata, using an optional CSV for Title and Media Identifier.
+Runs Whisper over a directory of media files.  For each mp4 and mp3 file, it generates a text transcript and a WebVTT caption file with FADGI metadata, using an optional CSV for Title and Media Identifier. The script also calculates the average word confidence of the output, and for any score below 80% it creates a log file listing the start/stop times and text for all segments with an average word confidence below 80%.
 
 The CSV file should be set up with these headers: "File", "Title", "Media Identifier". Include the names of each reference file in the "File" column. (For best results, save the CSV as utf-8 encoded.) For example:
 File | Title |	Media Identifier
@@ -24,7 +24,8 @@ File Creator | hard-coded/version info generated from script
 File Creation Date | generated from script
 Title | matched from CSV
 Origin History | hard-coded
-Local Usage Element: Review history | hard-coded
+Local Usage Element: Review History | hard-coded
+Local Usage Element: Average Word Confidence | generated from script
 
 ## Requirements:
 - [Whisper](https://github.com/openai/whisper)
@@ -33,3 +34,6 @@ Local Usage Element: Review history | hard-coded
 
 ## run_whisper.py
 run_whisper.py is an optional script that finds new (created within the previous 24 hours) video and audio files in a folder and runs whispervtt on them.
+
+## move_vtts.py
+move_vtts.py is an optional script that finds vtt and txt files, copies them to a sync folder for review, and moves them to a staging folder
