@@ -11,8 +11,6 @@ import whisper
 from whisper.utils import get_writer
 from datetime import date, timedelta
 import pandas as pd
-import json
-# import numpy as np
 
 # sys.argv = [
 #     'whispervtt.py',
@@ -148,7 +146,7 @@ def get_language(mediaf, modelo):
     alpha3 = lang_obj.to_alpha3()
     return alpha3
 
-def parse_json(result):
+def parse_result(result):
     seg = result.get("segments", {})
     file_probs = []
     seg_attrs = []
@@ -162,7 +160,6 @@ def parse_json(result):
         words = x.get("words", "unknown")
         seg_probs = []
         for w in words:
-            word = w["word"]
             prob_np = w["probability"]
             file_probs.append(prob_np)
             seg_probs.append(prob_np)
@@ -232,8 +229,9 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
     txt_write(result, audio_path)
     
     justName = Path(audio_path).stem
+    sourceFile = os.path.basename(audio_path)
     
-    avg_word_prob, seg_attrs = parse_json(result)
+    avg_word_prob, seg_attrs = parse_result(result)
     print(f'average word probability for file: {avg_word_prob:.2%}')
     if avg_word_prob < 80:
         print('warning: average word probability is less than 80%')
@@ -248,8 +246,6 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
 
     vtt_write = get_writer('vtt', output_dir=output_dir)
     vtt_write(result, audio_path, word_options)
-    
-    sourceFile = os.path.basename(audio_path)
     
     outputVTT = f"{outputDir}/{justName}.vtt"
     
