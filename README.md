@@ -1,5 +1,5 @@
 # whispervtt
-Runs Whisper over a directory of media files.  For each mp4 and mp3 file, it generates a text transcript and a WebVTT caption file with FADGI metadata, using an optional CSV for Title and Media Identifier. The script also calculates the average word confidence of the output, and for any score below 80% it creates a log file listing the start/stop times and text for all segments with an average word confidence below 80%.
+Runs Whisper over a directory of media files.  For each mp4, mp3, and wav file, it generates a text transcript and a WebVTT caption file with FADGI metadata, using an optional CSV for Title and Media Identifier. The script also calculates the average word confidence of the output, and for any score below 80% it creates a log file listing the start/stop times and text for all segments with an average word confidence below 80%.
 
 The CSV file should be set up with these headers: "File", "Title", "Media Identifier". Include the names of each reference file in the "File" column. (For best results, save the CSV as utf-8 encoded.) For example:
 File | Title |	Media Identifier
