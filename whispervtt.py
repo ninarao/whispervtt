@@ -233,14 +233,11 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
     
     justName = Path(audio_path).stem
     
-    json_write = get_writer('json', output_dir=output_dir)
-    json_write(result, audio_path)
     avg_word_prob, seg_attrs = parse_json(result)
     print(f'average word probability for file: {avg_word_prob:.2%}')
     if avg_word_prob < 80:
         print('warning: average word probability is less than 80%')
         readable_check_seg = get_segments(seg_attrs)
-    
     if readable_check_seg:
         log_bad_segments(avg_word_prob, readable_check_seg, justName, output_dir)
 
@@ -277,7 +274,8 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
             f"File Creation Date: {today}",
             f"{TitleLine}",
             "Origin History: Created by Emory Libraries Media Preservation",
-            "_Review History: unreviewed"
+            "_Review History: unreviewed",
+            f"_Average Word Confidence: {avg_word_prob:.2%}"
             ]
         mString = '\n'.join(mList)
         data = data.replace('WEBVTT', mString)
@@ -302,6 +300,7 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
                 f"{TitleLine}",
                 "Origin History: Created by Emory Libraries Media Preservation",
                 "_Review History: unreviewed",
+                f"_Average Word Confidence: {avg_word_prob:.2%}",
                 "",
                 f"{lines[0]}"
                 ]
