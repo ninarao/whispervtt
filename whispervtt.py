@@ -81,8 +81,6 @@ def choose_lang():
             try:
                 find_lang = langcodes.find(langg)
                 langchoice = str(find_lang)
-                lang_obj3 = Language.get(find_lang).to_alpha3()
-                print(f"language: {lang_obj3}")
                 return langchoice
             except LookupError as e:
                 print(f'error: {e}')
@@ -206,7 +204,7 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
     if langchoice == None:
         lango = get_language(audio_path, modell)
     else:
-        lango = langchoice  
+        lango = Language.get(langchoice).to_alpha3()
         print(f"language: {lango}")
 
     model = whisper.load_model(modell)
