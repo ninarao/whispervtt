@@ -163,9 +163,11 @@ def parse_result(result):
             prob_np = w["probability"]
             file_probs.append(prob_np)
             seg_probs.append(prob_np)
-        seg_avg = sum(seg_probs) / len(seg_probs)
-        seg_attrs.append([id, seg_avg, start, end, text])
-    avg_word_prob = sum(file_probs) / len(file_probs)
+        if seg_probs:
+            seg_avg = sum(seg_probs) / len(seg_probs)
+            seg_attrs.append([id, seg_avg, start, end, text])
+    if file_probs:
+        avg_word_prob = sum(file_probs) / len(file_probs)
     return avg_word_prob, seg_attrs
 
 def get_segments(seg_attrs):
@@ -183,6 +185,7 @@ def get_segments(seg_attrs):
 def log_bad_segments(avg_word_prob, readable_check_seg, justName, output_dir):
     log = f"{output_dir}/{justName}_low-prob-segments.txt"
     str_prob = f"{avg_word_prob:.2%}"
+    print('Logging low-probability segments...')
     with open(log, "a", encoding='utf-8') as f:
         f.write(justName + '\n' + 'Average Word Probability: ' + str_prob + '\n\n')
         for seg in readable_check_seg:
@@ -197,9 +200,6 @@ def log_bad_segments(avg_word_prob, readable_check_seg, justName, output_dir):
             f.write('\t' + 'End Time: ' + end + '\n')
             f.write('\t' + 'Text:' + text + '\n')
             print(f'Segment {seg[0]}: Avg Word Probability {seg[1]}')
-            print(f'Start Time: {seg[2]}')
-            print(f'End Time: {seg[3]}')
-            print(f'Text: {seg[4]}')
     f.close()
 
 def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt_header):
@@ -233,7 +233,8 @@ def whisper_transcribe(audio_path: str, modell, langchoice, outputDir, arg2, txt
     
     avg_word_prob, seg_attrs = parse_result(result)
     print(f'average word probability for file: {avg_word_prob:.2%}')
-    if avg_word_prob < 80:
+    readable_check_seg = []
+    if avg_word_prob < .80:
         print('warning: average word probability is less than 80%')
         readable_check_seg = get_segments(seg_attrs)
     if readable_check_seg:
